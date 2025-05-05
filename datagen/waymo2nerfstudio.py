@@ -143,7 +143,7 @@ class WaymoDataExtractor:
                     return WaymoDataExtractor.RETURN_SKIP
 
                 sensor_params = self.extract_sensor_params(frame)
-                map_data = self.extract_map_data(frame)
+                # map_data = self.extract_map_data(frame)
                 # record the vehicle pose at the first frame
                 vehicle_init_pose = np.array(frame.pose.transform).reshape((4, 4))
 
@@ -159,8 +159,8 @@ class WaymoDataExtractor:
             json.dump(meta, fout, indent=4)
         with open(segment_out_dir / "annotation.json", "w") as fout:
             json.dump({"frames": annotations}, fout, indent=4)
-        with open(segment_out_dir / "maps.json", "w") as fout:
-            json.dump(map_data, fout, indent=4)
+        # with open(segment_out_dir / "maps.json", "w") as fout:
+        #     json.dump(map_data, fout, indent=4)
 
         return WaymoDataExtractor.RETURN_OK
 
@@ -200,59 +200,6 @@ class WaymoDataExtractor:
             out[lidar_name] = {"type": "lidar", "extrinsic": extrinsic.tolist()}
 
         return out
-
-    def extract_map_data(self, frame: dataset_pb2.Frame) -> Dict[str, Any]:
-        """
-        frame.map_features have many MapFeature item
-        message MapFeature {
-            // A unique ID to identify this feature.
-            optional int64 id = 1;
-
-            // Type specific data.
-            oneof feature_data {
-                LaneCenter lane = 3; # polyline
-                RoadLine road_line = 4; # polyline
-                RoadEdge road_edge = 5; # polyline
-                StopSign stop_sign = 7; 
-                Crosswalk crosswalk = 8; # polygon
-                SpeedBump speed_bump = 9; # polygon
-                Driveway driveway = 10; # polygon
-            }
-        }
-
-        Returns:
-            map_data: Dict
-                'lane': list of polylines, each polyline is noted by several vertices.
-                'road_line': list of polylines, each polyline is noted by several vertices.
-                ...
-        """
-        def hump_to_underline(hump_str):
-            import re
-            return re.sub(r'([a-z])([A-Z])', r'\1_\2', hump_str).lower()
-
-        map_features_list = json_format.MessageToDict(frame)['mapFeatures']
-        feature_names = ["lane", "road_line", "road_edge", "crosswalk", "speed_bump", "driveway"]
-        map_data = dict(zip(feature_names, [[] for _ in range(len(feature_names))]))
-
-        for feature in tqdm(map_features_list):
-            feature_name = list(feature.keys())
-            feature_name.remove("id")
-            feature_name = feature_name[0]
-            feature_name_lower = hump_to_underline(feature_name)
-
-            feature_content = feature[feature_name]
-            if feature_name_lower in ["lane", "road_line", "road_edge"]:
-                polyline = feature_content['polyline'] # [{'x':..., 'y':..., 'z':...}, {'x':..., 'y':..., 'z':...}, ...]
-            elif feature_name_lower in ["crosswalk", "speed_bump", "driveway"]:
-                polyline = feature_content['polygon'] # [{'x':..., 'y':..., 'z':...}, {'x':..., 'y':..., 'z':...}, ...]
-            else:
-                continue
-
-            polyline = [[point['x'], point['y'], point['z']] for point in polyline] # [[x, y, z], [x, y, z], ...]
-            map_data[hump_to_underline(feature_name)].append(polyline)
-
-        return map_data
-
     def extact_frame_images(
         self, frame: dataset_pb2.Frame, segment_out_dir: Path, sensor_params
     ) -> List[Dict[str, Any]]:
@@ -398,17 +345,17 @@ class WaymoDataExtractor:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", "-i", default='./waymo_tfrecords', type=str, required=False, help="Root directory of waymo dataset (tfrecord files).")
+    parser.add_argument("--input_dir", "-i", default='/mnt/data_nas/data/xingyu/waymo', type=str, required=False, help="Root directory of waymo dataset (tfrecord files).")
     parser.add_argument("--output_dir", "-o", default='./waymo_ns', type=str, required=False, help="Output directory of extracted data.")
-    parser.add_argument("--no_lidar", action="store_true", help="Do not extract lidar data.")
-    parser.add_argument("--no_camera", action="store_true", help="Do not extract camera data.")
-    parser.add_argument("--split", "-s", default=None, const=None, nargs="?", choices=["training", "testing", "validation", None], 
+    parser.add_argument("--no_lidar", default=True, action="store_true", help="Do not extract lidar data.")
+    parser.add_argument("--no_camera", default=True, action="store_true", help="Do not extract camera data.")
+    parser.add_argument("--split", "-s", default='validation', const=None, nargs="?", choices=["training", "testing", "validation", None], 
                         help="Split of the dataset. \
                               If 'training' or 'testing' is specified, suppose you have a 2-level heirarchy of input_dir. \
                               If None is specified, suppose you have a 1-level heirarchy of input_dir."
                         )
     parser.add_argument("--specify_segments", default=[], nargs="+")
-    parser.add_argument("--num_workers", type=int, default=1)
+    parser.add_argument("--num_workers", type=int, default=32)
 
     args = parser.parse_args()
 

@@ -32,8 +32,8 @@ from datagen.scube_data_utils import object_info_to_cuboid, object_info_to_objec
 SAVE_RGB_WDS = False
 SAVE_SEGMENTATION_WDS = False
 SAVE_POSE_WDS = True
-SAVE_DYNAMIC_OBJECT_BBOX_WDS = True
-SAVE_ALL_OBJECT_BBOX_WDS = True 
+SAVE_DYNAMIC_OBJECT_BBOX_WDS = False
+SAVE_ALL_OBJECT_BBOX_WDS = False 
 SAVE_DEPTH_WDS = False
 RECTIFY_DEPTH_AFFINE = False
 
@@ -419,15 +419,15 @@ def generate_shards(clip_id,
 
 @click.command()
 @click.option('--clip_list', type=str,
-                default='./folders.json',
+                default='./train_list.json',
                 help='The json file that contains the clip ids')
 @click.option('--ns_extraction_root', '-i', type=str, 
-               default='../waymo_ns',
+               default='./waymo_ns/training/',
                help='The root folder of the extracted image data')
 @click.option('--output_root', '-o', type=str,
-                default='../waymo_webdataset',
+                default='../waymo_ns/training/',
                 help='The root folder of the output webdataset')
-@click.option('--num_nodes', '-n', default=1, type=int, help='Number of nodes')
+@click.option('--num_nodes', '-n', default=32, type=int, help='Number of nodes')
 @click.option('--manual_split', '-m', default=-1, type=int, help='Manually split the clips for multi node running')
 def main(clip_list, 
          ns_extraction_root, 

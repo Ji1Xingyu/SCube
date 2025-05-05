@@ -52,7 +52,7 @@ class WaymoWdsDataset(BaseWdsDataset):
                 tolerent_shorter_offsets=False,
                 grid_crop_augment=False, grid_crop_augment_range=[0, 0, 0],
                 replace_all_car_with_cad=False,
-                add_road_line_to_GT=False,
+                add_road_line_to_GT=False, save_path = './waymo_semcity/',
                 **kwargs):
         
         super().__init__(wds_root_url, wds_scene_list_file, attr_subfolders,

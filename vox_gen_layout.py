@@ -23,58 +23,7 @@ setproctitle.setproctitle("xingyu_waymo2kitti")  # Change "save_triplane" to you
 
 from tqdm import tqdm
 import shutil
-for path in tqdm(os.listdir('/data2/xingyu/waymo_semcity')):
-    vox_path = os.path.join('/data2/xingyu/waymo_semcity', path, 'voxels')
-    for file in os.listdir(vox_path):
-        if file.endswith('occ.label'):
-            occ_path = os.path.join(vox_path, file.replace('_occ.label', '.occ.label'))
-            os.rename(os.path.join(vox_path, file), occ_path)
-        if file.endswith('_seed.label'):
-            seed_path = os.path.join(vox_path, file.replace('_seed.label', '.seed.label'))
-            os.rename(os.path.join(vox_path, file), seed_path)
-        if file.endswith('all.invalid'):
-            invalid_path = os.path.join(vox_path, file.replace('all.invalid', '.occ.invalid'))
-            os.rename(os.path.join(vox_path, file), invalid_path)
-        if file.endswith('seed.invalid'):
-            seed_invalid_path = os.path.join(vox_path, file.replace('seed.invalid', '.seed.invalid'))
-            os.rename(os.path.join(vox_path, file), seed_invalid_path)
-    asdasdasd = 1
 
-attr_subfolders = ['pose', 'intrinsic', 'pc_voxelsize_01',
-                        #    'image_front', 'image_front_left', 'image_front_right', 'image_side_left', 'image_side_right',
-                            # 'skymask_front', 'skymask_front_left', 'skymask_front_right', 'skymask_side_left', 'skymask_side_right',
-                            # 'rectified_metric3d_depth_affine_100_front', 
-                            # 'rectified_metric3d_depth_affine_100_front_left', 
-                            # 'rectified_metric3d_depth_affine_100_front_right', 
-                            # 'rectified_metric3d_depth_affine_100_side_left', 
-                            # 'rectified_metric3d_depth_affine_100_side_right',
-                            'all_object_info'
-]
-
-# grid_crop_bbox_min = [-10.24, -51.2, -6.4]
-# grid_crop_bbox_max = [92.16, 51.2, 6.4]
-
-# grid_crop_bbox_min = [-5.12, -25.6, -3.2]
-# grid_crop_bbox_max = [46.08, 25.6, 3.2]
-
-# rid_crop_bbox_min=[-10.24, -51.2, -12.8], grid_crop_bbox_max=[92.16, 51.2, 38.4]
-
-grid_crop_bbox_min = [-25.6, -25.6, -6.4]
-grid_crop_bbox_max = [25.6, 25.6, 6.4]
-
-end_point = [-(grid_crop_bbox_min[0] + grid_crop_bbox_max[0]) / 2.0,
-             -(grid_crop_bbox_min[1] + grid_crop_bbox_max[1]) / 2.0,
-             -(grid_crop_bbox_min[2] + grid_crop_bbox_max[2]) / 2.0]
-ep_ts = torch.tensor(end_point, device='cuda')
-ep_ts = ep_ts.unsqueeze(0)
-
-root_path = "/home/xingyu/gs_ws/SCube-release/waymo_webdataset/pose"
-save_path = "/data2/xingyu/waymo_semcity"
-
-# to make more dense
-vox_size = 1.171875 / 4
-
-all_tars = os.listdir(root_path)
 
 # 生成每个维度上的采样点
 # x_range = np.arange(-25, 230, 0.25)
@@ -237,6 +186,26 @@ def ray_tracing(pcds, semantics, ep_ts):
     return reshape_labels, reshape_invalid, reshape_valid
 
 if __name__ == "__main__":
+
+    
+    grid_crop_bbox_min = [-25.6, -25.6, -6.4]
+    grid_crop_bbox_max = [25.6, 25.6, 6.4]
+
+    end_point = [-(grid_crop_bbox_min[0] + grid_crop_bbox_max[0]) / 2.0,
+                -(grid_crop_bbox_min[1] + grid_crop_bbox_max[1]) / 2.0,
+                -(grid_crop_bbox_min[2] + grid_crop_bbox_max[2]) / 2.0]
+    ep_ts = torch.tensor(end_point, device='cuda')
+    ep_ts = ep_ts.unsqueeze(0)
+
+    root_path = "/home/xingyu/gs_ws/SCube-release/waymo_webdataset/pose"
+    save_path = "/data2/xingyu/waymo_semcity"
+
+    # to make more dense
+    vox_size = 1.171875 / 4
+
+    all_tars = os.listdir(root_path)
+    
+    
     list_clips = []
     for tar in tqdm(all_tars, desc="Processing tar files"):
         # tar = '11623618970700582562_2840_367_2860_367.tar'
@@ -275,15 +244,16 @@ if __name__ == "__main__":
 
                     # # 保存 .npy
                     # np.save(save_filepath, grid2world)
-        list_poses = list_poses[20:-20]
+        list_poses = list_poses[10:-10]
         w_T_cam0 = list_poses[0]
         w_T_camn = list_poses[-1]
         delta_pose =  torch.linalg.inv(w_T_cam0) @ w_T_camn
         delta_distance = torch.norm(delta_pose[:3, 3])
-        if delta_distance < 50:
+        if delta_distance < 40:
             continue
         list_clips.append(clip)
-        grid_path = os.path.join('/home/xingyu/gs_ws/SCube-release/waymo_webdataset/pc_voxelsize_01', tar)
+        
+        grid_path = os.path.join(root_path.replace('pose', 'pc_voxelsize_01'), tar)
         with tarfile.open(grid_path, "r") as tar_ext:
             members = [m for m in tar_ext.getmembers() if m.name.endswith(".pth")]
             pth_member = members[0]

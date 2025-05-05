@@ -20,50 +20,30 @@ import json
 import setproctitle
 setproctitle.setproctitle("xingyu_waymo2kitti")  # Change "save_triplane" to your preferred name
 
-attr_subfolders = ['pose', 'intrinsic', 'pc_voxelsize_01',
-                        #    'image_front', 'image_front_left', 'image_front_right', 'image_side_left', 'image_side_right',
-                            # 'skymask_front', 'skymask_front_left', 'skymask_front_right', 'skymask_side_left', 'skymask_side_right',
-                            # 'rectified_metric3d_depth_affine_100_front', 
-                            # 'rectified_metric3d_depth_affine_100_front_left', 
-                            # 'rectified_metric3d_depth_affine_100_front_right', 
-                            # 'rectified_metric3d_depth_affine_100_side_left', 
-                            # 'rectified_metric3d_depth_affine_100_side_right',
-                            'all_object_info'
-]
+attr_subfolders = ['pose', 'intrinsic', 'pc_voxelsize_01', 'all_object_info']
 
 # grid_crop_bbox_min = [-10.24, -51.2, -6.4]
 # grid_crop_bbox_max = [92.16, 51.2, 6.4]
 
-grid_crop_bbox_min = [-5.12, -25.6, -3.2]
-grid_crop_bbox_max = [46.08, 25.6, 3.2]
-end_point = [-(grid_crop_bbox_min[0] + grid_crop_bbox_max[0]) / 2.0,
-             -(grid_crop_bbox_min[1] + grid_crop_bbox_max[1]) / 2.0,
-             -(grid_crop_bbox_min[2] + grid_crop_bbox_max[2]) / 2.0]
+# with open('./waymo_split/official_train_w_dynamic_w_ego_motion_gt_30m_good_voxel.json', 'r') as f:
+#     filelist = json.load(f)
+# with open('./waymo_split/official_val_w_dynamic_w_ego_motion_gt_30m_good_voxel.json', 'r') as f:
+#     filelist_val = json.load(f)
+# yaml_data = {
+#     'split': {
+#         'train': filelist,
+#         'val': filelist_val
+#     }
+# }
+# import yaml
+# with open('waymo_semcity.yaml', 'w') as f:
+#     yaml.dump(yaml_data, f)
 
-Nx = 256
-Ny = 256
-Nz = 32
-Minx = -128
-Miny = -128
-Minz = -16
+# aasdasd = 1
+
 
 # rid_crop_bbox_min=[-10.24, -51.2, -12.8], grid_crop_bbox_max=[92.16, 51.2, 38.4]
 
-dataset_c = WaymoWdsDataset(
-        wds_root_url= './waymo_webdataset',
-        # wds_scene_list_file= './folders.json',
-        wds_scene_list_file= './waymo_split/train.json',
-        attr_subfolders=attr_subfolders,
-        spec=[DS.GT_SEMANTIC],
-        split='train',
-        fvdb_grid_type='vs02',
-        grid_crop_augment=True,
-        grid_crop_bbox_min=grid_crop_bbox_min,
-        grid_crop_bbox_max=grid_crop_bbox_max,
-        input_depth_type='rectified_metric3d_depth_affine',
-        replace_all_car_with_cad = True,
-        add_road_line_to_GT=False,
-)
 
 def save_semantic_kitti(paths, pose, valid:np.ndarray, invalid:np.ndarray, labels:np.ndarray):
     dir_path, file_name = os.path.split(paths)
@@ -104,13 +84,7 @@ def save_semantic_kitti(paths, pose, valid:np.ndarray, invalid:np.ndarray, label
     bins.astype(np.uint8).tofile(bin_path)
 
 
-def xyz2count(ts : torch.tensor):
-    x = ts[0][0].item()
-    y = ts[0][1].item()
-    z = ts[0][2].item()
-    return (x - Minx)*Ny*Nz + (y - Miny)*Nz + (z - Minz)
-
-def waymo2semkitti(ep_ts, batch):
+def waymo2semkitti(ep_ts, batch, Nx, Ny, Nz, Minx, Miny, Minz):
 
     batch = batch2device(batch, device)
     generated_grids, generated_semantics = create_fvdb_grid_w_semantic_from_points(
@@ -216,11 +190,11 @@ def waymo2semkitti(ep_ts, batch):
         
 
         ijk = dense_grid.ijk.jdata
-        ijk += torch.tensor([128, 128, 16], device=ijk.device, dtype=torch.int32)
+        ijk += torch.tensor([Nx/2, Ny/2, Nz/2], device=ijk.device, dtype=torch.int32)
 
-        reshape_labels = torch.zeros((256, 256, 32), dtype=labels.dtype, device='cpu')
-        reshape_invalid = torch.zeros((256, 256, 32), dtype=torch.bool, device='cpu')
-        reshape_valid = torch.zeros((256, 256, 32), dtype=torch.bool, device='cpu')
+        reshape_labels = torch.zeros((Nx, Ny, Nz), dtype=labels.dtype, device='cpu')
+        reshape_invalid = torch.zeros((Nx, Ny, Nz), dtype=torch.bool, device='cpu')
+        reshape_valid = torch.zeros((Nx, Ny, Nz), dtype=torch.bool, device='cpu')
 
         reshape_labels[ijk[:, 0], ijk[:, 1], ijk[:, 2]]     = labels.cpu()
         reshape_invalid[ijk[:, 0], ijk[:, 1], ijk[:, 2]]    = dense_invalid.cpu()
@@ -237,7 +211,43 @@ def waymo2semkitti(ep_ts, batch):
 if __name__ == "__main__":
     # Example usage:
     # Replace with your directory containing files and desired output JSON path
-    ass = 1
+    
+    parser = get_default_parser()
+    parser.add_argument('--in_path', type=str, default='./waymo_semcity/')
+    parser.add_argument('--wds_scene_list_file', type=str, default='./waymo_semcity/')
+    parser.add_argument('--out_path', type=str, default='./waymo_semcity/')
+    args = parser.parse_args()
+    
+    grid_crop_bbox_min = [-5.12, -25.6, -3.2]
+    grid_crop_bbox_max = [46.08, 25.6, 3.2]
+    end_point = [-(grid_crop_bbox_min[0] + grid_crop_bbox_max[0]) / 2.0,
+                -(grid_crop_bbox_min[1] + grid_crop_bbox_max[1]) / 2.0,
+                -(grid_crop_bbox_min[2] + grid_crop_bbox_max[2]) / 2.0]
+
+    Nx = 256
+    Ny = 256
+    Nz = 32
+    Minx = -128
+    Miny = -128
+    Minz = -16
+    
+    dataset_c = WaymoWdsDataset(
+            wds_root_url= './waymo_webdataset',
+            # wds_scene_list_file= './folders.json',
+            wds_scene_list_file= './waymo_split/train.json',
+            attr_subfolders=attr_subfolders,
+            spec=[DS.GT_SEMANTIC],
+            split='train',
+            fvdb_grid_type='vs02',
+            grid_crop_augment=True,
+            grid_crop_bbox_min=grid_crop_bbox_min,
+            grid_crop_bbox_max=grid_crop_bbox_max,
+            input_depth_type='rectified_metric3d_depth_affine',
+            replace_all_car_with_cad = True,
+            add_road_line_to_GT=False,
+            save_path = args.save_path,
+    )
+    
     dataloader_c = DataLoader(
         dataset_c,
         batch_size=1,
@@ -251,7 +261,6 @@ if __name__ == "__main__":
 
     # 
     bbx = -np.array(grid_crop_bbox_min) + np.array(grid_crop_bbox_max)
-    bbx_vox_size = bbx / 0.2
     ep_ts = torch.tensor(end_point, device='cuda')
     ep_ts = ep_ts.unsqueeze(0)
 
@@ -261,8 +270,6 @@ if __name__ == "__main__":
         # torch.cuda.empty_cache()
         # gc.collect()
         
-        
-
         batch = batch2device(batch, device)
          
         generated_grids, generated_semantics = create_fvdb_grid_w_semantic_from_points(
@@ -368,11 +375,11 @@ if __name__ == "__main__":
             
 
             ijk = dense_grid.ijk.jdata
-            ijk += torch.tensor([128, 128, 16], device=ijk.device, dtype=torch.int32)
+            ijk += torch.tensor([Nx/2, Ny/2, Nz/2], device=ijk.device, dtype=torch.int32)
 
-            reshape_labels = torch.zeros((256, 256, 32), dtype=labels.dtype, device='cpu')
-            reshape_invalid = torch.zeros((256, 256, 32), dtype=torch.bool, device='cpu')
-            reshape_valid = torch.zeros((256, 256, 32), dtype=torch.bool, device='cpu')
+            reshape_labels = torch.zeros((Nx, Ny, Nz), dtype=labels.dtype, device='cpu')
+            reshape_invalid = torch.zeros((Nx, Ny, Nz), dtype=torch.bool, device='cpu')
+            reshape_valid = torch.zeros((Nx, Ny, Nz), dtype=torch.bool, device='cpu')
 
             reshape_labels[ijk[:, 0], ijk[:, 1], ijk[:, 2]]     = labels.cpu()
             reshape_invalid[ijk[:, 0], ijk[:, 1], ijk[:, 2]]    = dense_invalid.cpu()

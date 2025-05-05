@@ -51,7 +51,7 @@ class BaseWdsDataset(torch.utils.data.IterableDataset):
                 tolerent_shorter_offsets=False,
                 grid_crop_augment=False, grid_crop_augment_range=[12.8, 12.8, 3.2],
                 replace_all_car_with_cad=False,
-                add_road_line_to_GT=False, voxel_shape = (256, 256, 32), 
+                add_road_line_to_GT=False, voxel_shape = (256, 256, 32), save_path = './waymo_semcity/', 
                 **kwargs):
         """
         Args:
@@ -78,7 +78,7 @@ class BaseWdsDataset(torch.utils.data.IterableDataset):
         # save bbx
         self.voxel_shape = voxel_shape
         self.save_bbx = True
-        self.save_path = './waymo_semcity/'
+        self.save_path = save_path
 
         self.grid_crop_bbox_min = grid_crop_bbox_min if isinstance(grid_crop_bbox_min, list) else \
             OmegaConf.to_container(grid_crop_bbox_min)
