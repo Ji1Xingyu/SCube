@@ -1,0 +1,80 @@
+name: scube_fvdb
+channels:
+  - pyg
+  - nvidia/label/cuda-12.1.0
+  - pytorch
+  - conda-forge
+  - pytorch3d
+dependencies:
+  - python=3.10 
+  - pytorch=2.2.0 
+  - torchvision=0.17.0
+  - pytorch-cuda=12.1
+  - numpy<2.0.0
+  - tensorboard
+  - pip
+  - git
+  - gitpython
+  - ca-certificates
+  - certifi
+  - openssl
+  - cuda
+  - cuda-nvcc
+  - parameterized
+  - gcc_linux-64=11
+  - gxx_linux-64=11
+  - setuptools
+  - cmake
+  - make
+  - ninja
+  - ipython
+  - matplotlib
+  - tqdm
+  - pyg
+  - sparsehash
+  - pytorch-scatter
+  - sphinx>=7.0.0
+  - sphinx_rtd_theme
+  - myst-parser
+  - pandas
+  - rich
+  - pytest-benchmark
+  - pytorch-lightning=1.9.4 
+  - omegaconf
+  - flatten-dict
+  - wandb
+  - transformers
+  - pytorch3d
+  - ffmpeg
+  - linkify-it-py
+  - pip:
+    - -f https://pycg.huangjh.tech/packages/index.html
+    - python-pycg
+    - point_cloud_utils==0.29.5 # ! required version
+    - loguru
+    - randomname
+    - einops
+    - pynvml
+    - polyscope
+    - trimesh
+    - gdown
+    - icecream
+    - boto3
+    - git+https://github.com/yifanlu0227/webdataset.git # support uint16
+    - git+https://github.com/yifanlu0227/PerceptualSimilarity.git # remove torch dependency
+    - git+https://github.com/rahul-goel/fused-ssim.git
+    - poetry
+    - viser
+    - mediapy
+    - scikit-spatial
+    - ffmpeg-python
+    - ftfy
+    - termcolor
+    - gdown
+    - open3d_pycg_cpu
+    - https://github.com/nerfstudio-project/gsplat/releases/download/v1.4.0/gsplat-1.4.0%2Bpt22cu121-cp310-cp310-linux_x86_64.whl
+    - https://fvdb.huangjh.tech/fvdb-0.2.0+pt22cu121-cp310-cp310-linux_x86_64.whl
+    - waymo-open-dataset-tf-2-11-0==1.6.1
+    - opencv_python_headless
+    - openmim
+    - timm

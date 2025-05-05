@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "scube"
+version = "0.1.0"
+description = "Instant Scene Reconstruction"
+authors = ["NVIDIA"]
+
+
+[tool.poetry.scripts]
+vis-pair = "inference.visualize_grid_compare:main"
+vis-gs = "inference.visualize_3dgs_pkl:main"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

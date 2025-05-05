@@ -1,0 +1,99 @@
+# image resolution is 1280 x 1920
+
+_wds_root_url: "../waymo_webdataset"
+_n_image_per_iter_sup: null
+use_fvdb_loader: true
+shuffle_buffer: 1000
+_add_high_res_grid: false
+_attr_subfolders: ['pose', 'pc_voxelsize_01', 'intrinsic', 'all_object_info']
+_fvdb_grid_type: vs04
+finest_voxel_size_goal: vs01
+# test
+# grid_crop_bbox_min: [-10.24, -51.2, -12.8]
+# grid_crop_bbox_max: [92.16, 51.2, 38.4]
+grid_crop_bbox_min: [-2.56, -12.8, -3.2]
+grid_crop_bbox_max: [23.04, 12.8, 9.6]
+input_depth_type: 'metric3d_depth'
+map_types: null
+frame_start_num: 30
+grid_crop_augment: false
+# test
+# grid_crop_augment_range: [12.8, 12.8, 3.2]
+grid_crop_augment_range: [6.4, 6.4, 1.6]
+add_road_line_to_GT: false
+replace_all_car_with_cad: true
+
+train_dataset: WaymoWdsDataset
+train_val_num_workers: 16
+train_kwargs:
+  split: train
+  wds_root_url: ${_wds_root_url}
+  wds_scene_list_file: "../waymo_split/official_train_w_dynamic_w_ego_motion_gt_30m_good_voxel.json"
+  attr_subfolders: ${_attr_subfolders}
+  grid_crop_bbox_min: ${grid_crop_bbox_min}
+  grid_crop_bbox_max: ${grid_crop_bbox_max}
+  grid_crop_augment: ${grid_crop_augment} # only train
+  grid_crop_augment_range: ${grid_crop_augment_range} # only train
+  frame_start_num: ${frame_start_num}
+  input_slect_ids: ${_input_slect_ids}
+  input_frame_offsets: ${_input_frame_offsets}
+  input_depth_type: ${input_depth_type}
+  sup_slect_ids: ${_sup_slect_ids}
+  sup_frame_offsets: ${_sup_frame_offsets}
+  n_image_per_iter_sup: ${_n_image_per_iter_sup}
+  fvdb_grid_type: ${_fvdb_grid_type}
+  finest_voxel_size_goal: ${finest_voxel_size_goal}
+  shuffle_buffer: ${shuffle_buffer}
+  add_high_res_grid: ${_add_high_res_grid}
+  map_types: ${map_types}
+  add_road_line_to_GT: ${add_road_line_to_GT}
+  replace_all_car_with_cad: ${replace_all_car_with_cad}
+
+
+val_dataset: WaymoWdsDataset
+val_kwargs:
+  split: val
+  wds_root_url: ${_wds_root_url}
+  wds_scene_list_file: "../waymo_split/official_val_w_dynamic_w_ego_motion_gt_30m_good_voxel.json" # modify!
+  attr_subfolders: ${_attr_subfolders}
+  grid_crop_bbox_min: ${grid_crop_bbox_min}
+  grid_crop_bbox_max: ${grid_crop_bbox_max}
+  frame_start_num: ${frame_start_num}
+  input_slect_ids: ${_input_slect_ids}
+  input_frame_offsets: ${_input_frame_offsets}
+  input_depth_type: ${input_depth_type}
+  sup_slect_ids: ${_sup_slect_ids}
+  sup_frame_offsets: ${_sup_frame_offsets}
+  n_image_per_iter_sup: ${_n_image_per_iter_sup}
+  fvdb_grid_type: ${_fvdb_grid_type}
+  finest_voxel_size_goal: ${finest_voxel_size_goal}
+  shuffle_buffer: ${shuffle_buffer}
+  add_high_res_grid: ${_add_high_res_grid}
+  map_types: ${map_types}
+  add_road_line_to_GT: ${add_road_line_to_GT}
+  replace_all_car_with_cad: ${replace_all_car_with_cad}
+
+
+test_dataset: WaymoWdsDataset
+test_num_workers: 4
+test_kwargs:
+  split: test
+  wds_root_url: ${_wds_root_url}
+  wds_scene_list_file: "../waymo_split/official_val_w_dynamic_w_ego_motion_gt_30m_good_voxel.json" # modify!
+  attr_subfolders: ${_attr_subfolders}
+  grid_crop_bbox_min: ${grid_crop_bbox_min}
+  grid_crop_bbox_max: ${grid_crop_bbox_max}
+  frame_start_num: ${frame_start_num}
+  input_slect_ids: ${_input_slect_ids}
+  input_frame_offsets: ${_input_frame_offsets}
+  input_depth_type: ${input_depth_type}
+  sup_slect_ids: ${_sup_slect_ids}
+  sup_frame_offsets: ${_sup_frame_offsets}
+  n_image_per_iter_sup: ${_n_image_per_iter_sup}
+  fvdb_grid_type: ${_fvdb_grid_type}
+  finest_voxel_size_goal: ${finest_voxel_size_goal}
+  shuffle_buffer: ${shuffle_buffer}
+  add_high_res_grid: ${_add_high_res_grid}
+  map_types: ${map_types}
+  add_road_line_to_GT: ${add_road_line_to_GT}
+  replace_all_car_with_cad: ${replace_all_car_with_cad}

@@ -1,0 +1,53 @@
+include_configs:
+  - ../train/diffusion/diffusion_128x128x128_sparse.yaml
+  - dataset.yaml
+
+name: 'scene-recon/waymo_wds'
+
+vae_config: configs/waymo_scube/train_vae_256x256x128_sparse.yaml
+# example: vae_checkpoint: '../wandb/scube-scene-recon/m63qmpot/checkpoints/last.ckpt'
+vae_checkpoint: '../wandb/scube-scene-recon/[YOUR_RUN_ID]/checkpoints/last.ckpt'
+
+# data
+accumulate_grad_batches: 8
+batch_size: 2
+batch_size_val: 1
+voxel_size: 0.1
+use_fvdb_loader: true
+_fvdb_grid_type: 'vs01'
+_input_slect_ids: [0]
+_input_frame_offsets: [0]
+_sup_slect_ids: [0]
+_sup_frame_offsets: [0]
+grid_crop_bbox_min: [-10.24, -51.2, -12.8]
+grid_crop_bbox_max: [92.16, 51.2, 38.4]
+grid_crop_augment: true
+grid_crop_augment_range: [6.4, 6.4, 1.6]
+replace_all_car_with_cad: true # rather than using bounding box, using CAD model makes more sense
+
+# adjust input setting - use semantic and intensity
+use_input_normal: false
+use_input_semantic: true
+use_input_intensity: false
+num_semantic: 23
+dim_semantic: 32
+
+use_pos_embed_world: false
+use_pos_embed_high: false
+
+
+use_semantic_cond: true
+conditioning_key: "concat" # "none", "adm", "concat"
+num_classes: 32
+
+network:
+  diffuser:
+    image_size: [256, 256, 64]
+    model_channels: 64
+    channel_mult: [1, 2, 4, 4]
+    attention_resolutions: [8, 16]
+  cond_stage_model:
+    target: "SemanticEncoder"
+    params:
+      num_semantic: 23 
+      dim_semantic: 32

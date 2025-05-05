@@ -1,0 +1,84 @@
+include_configs:
+  - ../train/diffusion/diffusion_16x16x16_dense.yaml
+  - dataset.yaml
+
+name: 'scene-recon/waymo_wds'
+
+vae_config: configs/waymo_scube/train_vae_64x64x64_dense_height_down2_residual.yaml
+# vae_checkpoint: '../wandb/scube-scene-recon/l1s2zzzi/checkpoints/last.ckpt'
+vae_checkpoint: '../wandb/scube-scene-recon/[YOUR_RUN_ID]/checkpoints/last.ckpt'
+
+# data
+accumulate_grad_batches: 16
+batch_size: 2
+batch_size_val: 1
+voxel_size: 0.4
+use_fvdb_loader: true
+_attr_subfolders: ['pose', 'pc_voxelsize_01', 'intrinsic', 
+                   'image_front', 'image_front_left', 'image_front_right', 'image_side_left', 'image_side_right',
+                   'skymask_front', 'skymask_front_left', 'skymask_front_right', 'skymask_side_left', 'skymask_side_right',
+                   'rectified_metric3d_depth_affine_100_front', 
+                   'rectified_metric3d_depth_affine_100_front_left', 
+                   'rectified_metric3d_depth_affine_100_front_right', 
+                   'rectified_metric3d_depth_affine_100_side_left', 
+                   'rectified_metric3d_depth_affine_100_side_right',
+                   'all_object_info']
+_fvdb_grid_type: 'vs04'
+_input_slect_ids: [0,1,2,3,4]
+_input_frame_offsets: [0]
+_sup_slect_ids: [0]
+_sup_frame_offsets: [0]
+grid_crop_bbox_min: [-10.24, -51.2, -12.8]
+grid_crop_bbox_max: [92.16, 51.2, 38.4]
+input_depth_type: 'rectified_metric3d_depth_affine'
+grid_crop_augment: true
+grid_crop_augment_range: [6.4, 6.4, 1.6]
+replace_all_car_with_cad: true # rather than using bounding box, using CAD model makes more sense
+
+# adjust input setting - use semantic and intensity
+use_input_normal: false
+use_input_semantic: true
+use_input_intensity: false
+num_semantic: 23
+dim_semantic: 32
+
+# condition
+conditioning_key: concat_scube_general
+use_image_lss_cond: true
+use_pos_embed: true
+
+network:
+  diffuser:
+    image_size: 64 # use during testing.
+    attention_resolutions: [4, 8]
+    model_channels: 192 
+    num_res_blocks: 2
+    channel_mult: [1, 2, 4, 4]
+    num_heads: 8
+    use_scale_shift_norm: True
+    resblock_updown: True
+
+  image_lss_cond_model:
+    target: LssEncoder
+    params:
+      image_resize_shape: [420, 630] # resize the input shape
+      encoder_name: 'dinov2'
+      cube_bbox_size: 64
+      depth_minmax: [0.2, 90]
+      depth_bin_num: 80
+      depth_mode: 'LID'
+      encoder_params:
+        dino_model_name: 'facebook/dinov2-base'
+        dino_freeze: true
+        out_dim_list: [384, 192, 112]
+        out_upsample_list: [true, true, false] # upsample 4x
+        out_downsample_list: [false, false, false]
+        out_use_gn_list: [false, false, false]
+      focal_loss_params:
+        smooth_target: true
+
+# condition
+img_feat_dim: 32
+
+supervision:
+  lss_depth_weight: 1
