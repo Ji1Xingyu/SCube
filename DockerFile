@@ -1,0 +1,109 @@
+FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+
+# 环境基本设置
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+# 安装系统基础依赖
+RUN apt-get update && apt-get install -y \
+    python3.10 python3.10-dev python3.10-distutils \
+    python3-pip python3-venv \
+    libpython3.10-stdlib \
+    libpython3.10 \
+    gcc-11 g++-11 cmake ninja-build make git ffmpeg wget curl unzip \
+    libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install -y python3.10-venv
+
+# 设置gcc 11默认
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+
+# 升级pip和安装poetry等工具
+RUN python3.10 -m pip install --upgrade pip setuptools wheel poetry openmim
+
+# 创建工作目录
+WORKDIR /workspace
+
+# 安装 PyTorch 2.2.0 + CUDA 12.1
+RUN pip install torch==2.2.0+cu121 torchvision==0.17.0+cu121 torchaudio==2.2.0+cu121 \
+    -f https://download.pytorch.org/whl/cu121/torch_stable.html
+
+# 安装其他PyPI包 + 特殊来源的包
+RUN pip install \
+    "numpy<2.0.0" \
+    tensorboard \
+    gitpython \
+    parameterized \
+    ipython \
+    matplotlib \
+    tqdm \
+    pandas \
+    rich \
+    pytorch-lightning==1.9.4 \
+    omegaconf \
+    flatten-dict \
+    wandb \
+    transformers \
+    ffmpeg-python \
+    linkify-it-py \
+    python-pycg -f https://pycg.huangjh.tech/packages/index.html \
+    point_cloud_utils==0.29.5 \
+    loguru \
+    randomname \
+    einops \
+    pynvml \
+    polyscope \
+    trimesh \
+    gdown \
+    icecream \
+    boto3 \
+    poetry \
+    viser \
+    mediapy \
+    scikit-spatial \
+    ftfy \
+    termcolor \
+    opencv_python_headless \
+    open3d_pycg_cpu \
+    blobfile \
+    matplotlib \
+    prettytable \
+    tensorboard \
+    tensorboardX \
+    scikit-learn \
+
+
+    # RUN pip install -f https://pycg.huangjh.tech/packages/index.html python-pycg
+
+    # 安装外部项目的Git包
+    RUN pip install \
+    git+https://github.com/yifanlu0227/webdataset.git \
+    git+https://github.com/yifanlu0227/PerceptualSimilarity.git \
+    git+https://github.com/rahul-goel/fused-ssim.git
+
+# 安装whl包
+RUN pip install \
+    https://github.com/nerfstudio-project/gsplat/releases/download/v1.4.0/gsplat-1.4.0%2Bpt22cu121-cp310-cp310-linux_x86_64.whl \
+    https://fvdb.huangjh.tech/fvdb-0.2.0+pt22cu121-cp310-cp310-linux_x86_64.whl
+
+# 安装waymo-open-dataset
+RUN pip install waymo-open-dataset-tf-2-11-0==1.6.1
+
+# 安装pyg相关 (使用官网推荐命令)
+RUN pip install pyg-lib torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.2.0+cu121.html
+
+# 设置默认python
+RUN ln -s /usr/bin/python3.10 /usr/bin/python
+
+# 环境变量
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# 进入工作目录
+WORKDIR /workspace
+
+# 默认启动命令
+CMD ["/bin/bash"]
+
